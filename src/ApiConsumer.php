@@ -3,6 +3,7 @@
 namespace BlackBits\ApiConsumer;
 
 use BlackBits\ApiConsumer\Support\ShapeResolver;
+use Illuminate\Support\Str;
 
 abstract class ApiConsumer
 {
@@ -10,6 +11,7 @@ abstract class ApiConsumer
 
     public static function __callStatic($name, $arguments)
     {
+
         $endpoint = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Endpoints\\" . $name;
 
         if (! class_exists($endpoint)) {
@@ -24,6 +26,7 @@ abstract class ApiConsumer
             throw new \Exception("Class $endpoint does not exist.");
         }
 
+        $name = Str::singular($name);
         $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . $name;
 
         if (! class_exists($shape)) {
