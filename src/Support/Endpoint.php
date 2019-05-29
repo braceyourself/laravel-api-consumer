@@ -5,6 +5,7 @@ namespace BlackBits\ApiConsumer\Support;
 use BlackBits\ApiConsumer\CollectionCallbacks\_ReflectionCollectionCallback;
 use BlackBits\ApiConsumer\Contracts\CollectionCallbackContract;
 use BlackBits\ApiConsumer\Support\ShapeResolver;
+use Zttp\PendingZttpRequest;
 use Zttp\Zttp;
 use Illuminate\Support\Facades\Cache;
 
@@ -17,11 +18,16 @@ abstract class Endpoint
 
     protected $headers = [];
     protected $options = [];
+    protected $basic_auth = [];
     protected $path;
     protected $method;
 
     protected $shouldCache = false;
     protected $cacheDurationInMinutes = 5;
+    /**
+     * @var PendingZttpRequest
+     */
+    private $client;
 
 
     /**
@@ -31,8 +37,9 @@ abstract class Endpoint
      */
     public function __construct($basePath, ShapeResolver $shapeResolver)
     {
-        $this->basePath      = $basePath;
+        $this->basePath = $basePath;
         $this->shapeResolver = $shapeResolver;
+        $this->client = new PendingZttpRequest();
     }
 
     /**
@@ -50,7 +57,7 @@ abstract class Endpoint
     {
         $key = $this->method . "-" . $this->uri();
 
-        if(!empty($this->options)) {
+        if (!empty($this->options)) {
             $value = $this->options;
             if (is_array($value)) {
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
@@ -68,16 +75,22 @@ abstract class Endpoint
      */
     private function request()
     {
+        $method = strtolower($this->method);
 
-        if (strtolower($this->method) == "get") {
-
-            if ($this->shouldCache) {
-                return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function () {
-                    return Zttp::withHeaders($this->headers)->get($this->uri(), $this->options)->body();
-                });
-            }
-            return Zttp::withHeaders($this->headers)->get($this->uri(), $this->options)->body();
+        if (!empty($this->basic_auth)) {
+            $this->client = $this->client::withBasicAuth($this->basic_auth[0], $this->basic_auth[1]);
         }
+
+        $this->client = $this->client::withHeaders($this->headers);
+
+
+        if ($this->shouldCache) {
+            return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function ()use($method) {
+                return $this->client->$method($this->uri(), $this->options)->body();
+            });
+        }
+
+        return $this->client->$method($this->uri(), $this->options)->body();
 
         // TODO: other Methods
         return "[]";
@@ -126,10 +139,10 @@ abstract class Endpoint
      */
     public function __call($name, $arguments)
     {
-        $collectionCallback =  "\App\CollectionCallbacks\\" . ucfirst($name) . "CollectionCallback";
+        $collectionCallback = "\App\CollectionCallbacks\\" . ucfirst($name) . "CollectionCallback";
 
         if (!class_exists($collectionCallback)) {
-            $collectionCallback =  "\BlackBits\ApiConsumer\CollectionCallbacks\\" . ucfirst($name) . "CollectionCallback";
+            $collectionCallback = "\BlackBits\ApiConsumer\CollectionCallbacks\\" . ucfirst($name) . "CollectionCallback";
         }
 
         if (!class_exists($collectionCallback)) {
