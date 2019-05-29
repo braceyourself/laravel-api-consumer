@@ -119,9 +119,7 @@ abstract class Endpoint
 
     final public function get($id){
 
-        $this->path = "$this->path/$id";
-        return $this->resolveRequest($this->request('get'));
-
+        return $this->all()->where('transaction_id', $id);
 
     }
 
@@ -174,5 +172,7 @@ abstract class Endpoint
 
         return $collection;
     }
+
+
 
 }
