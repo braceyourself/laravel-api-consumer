@@ -18,7 +18,8 @@ abstract class Endpoint
 
     protected $headers = [];
     protected $options = [];
-    protected $basic_auth = [];
+    protected $auth = [];
+    protected $body_format = 'json';
     protected $path;
     protected $method;
 
@@ -73,29 +74,19 @@ abstract class Endpoint
     /**
      * @return mixed
      */
-    private function request($method = 'GET')
+    private function request($method = 'GET', $data)
     {
         $method = strtolower($method);
 
-        if (!empty($this->basic_auth)) {
-            $username = $this->basic_auth['username'] ?? $this->basic_auth[0];
-            $password = $this->basic_auth['password'] ?? $this->basic_auth[1]; 
-            $this->client = $this->client->withBasicAuth($username, $password);
-        }
+        $this->options = array_merge_recursive($this->options, $data);
 
-        $this->client = $this->client->withHeaders($this->headers);
+        $this->prepareRequest();
+        
 
+        return $this->handleResponse(
+            $this->client->$method($this->uri(), $this->options)->body()
+        );
 
-        if ($this->shouldCache) {
-            return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function ()use($method) {
-                return $this->client->$method($this->uri(), $this->options)->body();
-            });
-        }
-
-        return $this->client->$method($this->uri(), $this->options)->body();
-
-        // TODO: other Methods
-        return "[]";
     }
 
     /**
@@ -120,7 +111,14 @@ abstract class Endpoint
     final public function get($id){
 
         return $this->all()->where('transaction_id', $id);
+        
+    }
 
+    final public function post(array $data)
+    {
+        return $this->resolveRequest(
+            $this->request('POST', $data)
+        );
     }
 
     /**
@@ -173,6 +171,46 @@ abstract class Endpoint
         return $collection;
     }
 
+    private function prepareRequest(){
+        
+        return $this->setHeaders()->setBodyFormat()->buildAuthentication();
+        
+    }
+    
+    private function buildAuthentication(){
+        if (!empty($this->auth['basic'])) {
+            $auth = $this->auth['basic'];
+            
+            $username = $auth['username'] ?? $auth[0];
+            $password = $auth['password'] ?? $auth[1];
+            
+            $this->client = $this->client->withBasicAuth($username, $password);
+        }
+    }
+    
+    private function setBodyFormat(){
+        
+        $this->client->bodyFormat = $this->body_format;
+        
+        return $this;
+    }
+    
+    private function setHeaders(){
+        
+        $this->client = $this->client->withHeaders($this->headers);
+        
+        return $this;
+        
+    }
 
+    protected function handleResponse($response){
 
+        if ($this->shouldCache) {
+            return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function ()use($response) {
+                return $response;
+            });
+        }
+
+        return $response;
+    }
 }
