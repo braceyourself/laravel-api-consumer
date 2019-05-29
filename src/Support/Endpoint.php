@@ -78,10 +78,10 @@ abstract class Endpoint
         $method = strtolower($this->method);
 
         if (!empty($this->basic_auth)) {
-            $this->client = $this->client::withBasicAuth($this->basic_auth[0], $this->basic_auth[1]);
+            $this->client = $this->client->withBasicAuth($this->basic_auth[0], $this->basic_auth[1]);
         }
 
-        $this->client = $this->client::withHeaders($this->headers);
+        $this->client = $this->client->withHeaders($this->headers);
 
 
         if ($this->shouldCache) {
