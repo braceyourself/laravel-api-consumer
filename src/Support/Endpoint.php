@@ -73,12 +73,14 @@ abstract class Endpoint
     /**
      * @return mixed
      */
-    private function request()
+    private function request($method = 'GET')
     {
-        $method = strtolower($this->method);
+        $method = strtolower($method);
 
         if (!empty($this->basic_auth)) {
-            $this->client = $this->client->withBasicAuth($this->basic_auth[0], $this->basic_auth[1]);
+            $username = $this->basic_auth['username'] ?? $this->basic_auth[0];
+            $password = $this->basic_auth['password'] ?? $this->basic_auth[1]; 
+            $this->client = $this->client->withBasicAuth($username, $password);
         }
 
         $this->client = $this->client->withHeaders($this->headers);
@@ -108,18 +110,19 @@ abstract class Endpoint
      * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
      * @throws \Exception
      */
-    final public function get()
+    final public function all()
     {
-        $this->method = "GET";
+        return $this->resolveRequest(
+            $this->request('get')
+        );
+    }
 
-        $collection = $this->shapeResolver->resolve($this->request());
+    final public function get($id){
 
-        /** @var CollectionCallbackContract $callback */
-        foreach ($this->collectionCallbacks as $callback) {
-            $collection = $callback->applyTo($collection);
-        }
+        $this->path = "$this->path/$id";
+        return $this->resolveRequest($this->request('get'));
 
-        return $collection;
+
     }
 
     /**
@@ -128,7 +131,7 @@ abstract class Endpoint
      */
     final public function first()
     {
-        return $this->get()->first();
+        return $this->all()->first();
     }
 
     /**
@@ -154,6 +157,22 @@ abstract class Endpoint
 
         $this->registerCollectionCallback(new $collectionCallback(... $arguments));
         return $this;
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     * @throws \Exception
+     */
+    public function resolveRequest($request)
+    {
+        $collection = $this->shapeResolver->resolve($request);
+
+        /** @var CollectionCallbackContract $callback */
+        foreach ($this->collectionCallbacks as $callback) {
+            $collection = $callback->applyTo($collection);
+        }
+
+        return $collection;
     }
 
 }
