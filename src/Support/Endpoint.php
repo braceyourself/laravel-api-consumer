@@ -19,6 +19,7 @@ abstract class Endpoint
     protected $headers = [];
     protected $options = [];
     protected $auth = [];
+    protected $params = [];
     protected $body_format = 'json';
     protected $path;
     protected $method;
@@ -46,9 +47,22 @@ abstract class Endpoint
     /**
      * @return string
      */
-    private function uri()
+    private function buildUri()
     {
-        return $this->basePath . "/" . ltrim($this->path, "/");
+        $uri = "$this->basePath/" . ltrim($this->path, "/");
+
+        foreach($this->params as $key => $value){
+            if ($key === array_key_first($this->params))
+                $uri .= '?';
+
+            $uri .= "$key=$value";
+
+            if ($key !== array_key_first($this->params))
+                $uri .= '&';
+
+        }
+
+        return $uri;
     }
 
     /**
@@ -56,7 +70,7 @@ abstract class Endpoint
      */
     private function getCacheKey()
     {
-        $key = $this->method . "-" . $this->uri();
+        $key = $this->method . "-" . $this->buildUri();
 
         if (!empty($this->options)) {
             $value = $this->options;
@@ -74,17 +88,14 @@ abstract class Endpoint
     /**
      * @return mixed
      */
-    private function request($method = 'GET', $data)
+    private function request($method = 'GET', $data = [])
     {
         $method = strtolower($method);
 
-        $this->options = array_merge_recursive($this->options, $data);
-
-        $this->prepareRequest();
-        
+        $this->prepareRequest($data);
 
         return $this->handleResponse(
-            $this->client->$method($this->uri(), $this->options)->body()
+            $this->client->$method($this->buildUri(), $this->options)->body()
         );
 
     }
@@ -171,8 +182,10 @@ abstract class Endpoint
         return $collection;
     }
 
-    private function prepareRequest(){
-        
+    private function prepareRequest($data = []){
+
+        $this->options = array_merge_recursive($this->options, $data);
+
         return $this->setHeaders()->setBodyFormat()->buildAuthentication();
         
     }
@@ -185,6 +198,8 @@ abstract class Endpoint
             $password = $auth['password'] ?? $auth[1];
             
             $this->client = $this->client->withBasicAuth($username, $password);
+        }else if (isset($this->auth['key'])) {
+            $this->params['key'] = $this->auth['key'];
         }
     }
     

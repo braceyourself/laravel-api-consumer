@@ -26,7 +26,6 @@ abstract class ApiConsumer
             throw new \Exception("Class $endpoint does not exist.");
         }
 
-        $name = Str::singular($name);
         $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . $name;
 
         if (! class_exists($shape)) {
@@ -37,6 +36,10 @@ abstract class ApiConsumer
             $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . ucfirst($name) . "Shape";
         }
 
+        if (! class_exists($shape)) {
+            $name = Str::singular($name);
+            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . ucfirst($name) . "Shape";
+        }
         if (! class_exists($shape)) {
             throw new \Exception("Class $shape does not exist.");
         }
