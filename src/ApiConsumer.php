@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 
 abstract class ApiConsumer
 {
+    protected $shape;
 
     protected function getOptions()
     {
@@ -41,7 +42,8 @@ abstract class ApiConsumer
 
     private static function resolveEndpointClass($name)
     {
-        $endpoint = __NAMESPACE__ . "\\Endpoints\\" . ucfirst($name);
+
+        $endpoint = self::getApiConsumerNamespace("Endpoints", ucfirst($name));
 
         if (!class_exists($endpoint)) {
             throw new \Exception("Class $endpoint does not exist.");
@@ -50,26 +52,37 @@ abstract class ApiConsumer
         return $endpoint;
     }
 
-    private static function resolveEndpointShapeClass($name)
+    /**
+     * @param $endpointName
+     * @return string
+     * @throws \Exception
+     */
+    private static function resolveEndpointShapeClass($endpointName)
     {
-        $shape = __NAMESPACE__ . "\\Shapes\\" . $name;
 
-//        if (!class_exists($shape)) {
-//            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . $name . "Shape";
-//        }
-//
-//        if (!class_exists($shape)) {
-//            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . ucfirst($name) . "Shape";
-//        }
-//
-//        if (!class_exists($shape)) {
-//            $name = Str::singular($name);
-//            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . ucfirst($name) . "Shape";
-//        }
+        $shape = self::getApiConsumerNamespace("Shapes", ucfirst($endpointName));
+
         if (!class_exists($shape)) {
-            throw new \Exception("Class $shape does not exist.");
+            throw new \Exception("Endpoint Shape $shape does not exist.");
         }
 
         return $shape;
     }
+
+    /**
+     * @param mixed ...$append
+     * @return string
+     * @throws \ReflectionException
+     */
+    private static function getApiConsumerNamespace(...$append)
+    {
+        $namespaceName = (new \ReflectionClass(get_called_class()))->getNamespaceName();
+
+        foreach ($append as $arg) {
+            $namespaceName .= "\\$arg";
+        }
+
+        return $namespaceName;
+    }
+
 }
