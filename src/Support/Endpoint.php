@@ -245,6 +245,12 @@ abstract class Endpoint
 
     private function options($key)
     {
-        return optional($this->options[$key],null);
+
+        try {
+            $val = $this->options[$key];
+        } catch (\ErrorException $e) {
+            $val = null;
+        }
+        return $val;
     }
 }
