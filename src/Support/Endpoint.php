@@ -36,12 +36,18 @@ abstract class Endpoint
      * Endpoint constructor.
      * @param $basePath
      * @param ShapeResolver $shapeResolver
+     * @param array $options
      */
-    public function __construct($basePath, ShapeResolver $shapeResolver)
+    public function __construct($basePath, ShapeResolver $shapeResolver, array $options = [])
     {
         $this->basePath = $basePath;
         $this->shapeResolver = $shapeResolver;
         $this->client = new PendingZttpRequest();
+
+        if (array_key_exists('auth', $options)) {
+            $this->auth = $options['auth'];
+        }
+            
     }
 
     /**

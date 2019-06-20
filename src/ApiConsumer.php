@@ -7,8 +7,19 @@ use Illuminate\Support\Str;
 
 abstract class ApiConsumer
 {
-    abstract protected function getEndpoint();
+    protected function getEndpoint(){
+        return config("api-consumers.".$this->getName().".apiBasePath");
+    }
+    protected function getOptions(){
+        return config("api-consumers.".$this->getName().".options");
+    }
 
+    public function getName(){
+        return isset($this->name)?
+            $this->name :
+            class_basename($this);
+    }
+    
     public static function __callStatic($name, $arguments)
     {
 
@@ -44,6 +55,6 @@ abstract class ApiConsumer
             throw new \Exception("Class $shape does not exist.");
         }
 
-        return new $endpoint((new static)->getEndpoint(), new ShapeResolver(new $shape));
+        return new $endpoint((new static)->getEndpoint(), new ShapeResolver(new $shape), (new static)->getOptions());
     }
 }
