@@ -41,7 +41,7 @@ abstract class ApiConsumer
 
     private static function resolveEndpointClass($name)
     {
-        $endpoint = __NAMESPACE__ . "\\Endpoints\\" . $name;
+        $endpoint = __NAMESPACE__ . "\\Endpoints\\" . ucfirst($name);
 
         if (!class_exists($endpoint)) {
             throw new \Exception("Class $endpoint does not exist.");
