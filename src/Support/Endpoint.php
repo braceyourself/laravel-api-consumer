@@ -245,6 +245,6 @@ abstract class Endpoint
 
     private function options($key)
     {
-        return $this->options[$key];
+        return optional($this->options[$key],null);
     }
 }
