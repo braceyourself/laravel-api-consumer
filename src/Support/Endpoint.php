@@ -12,13 +12,11 @@ use Illuminate\Support\Facades\Cache;
 
 abstract class Endpoint
 {
-    private $basePath;
     private $shapeResolver;
     private $collectionCallbacks = [];
 
     protected $headers = [];
     protected $options = [];
-    protected $auth = [];
     protected $params = [];
     protected $body_format = 'json';
     protected $path;
@@ -34,20 +32,16 @@ abstract class Endpoint
 
     /**
      * Endpoint constructor.
-     * @param $basePath
      * @param ShapeResolver $shapeResolver
      * @param array $options
+     * @param array $args
      */
-    public function __construct($basePath, ShapeResolver $shapeResolver, array $options = [])
+    public function __construct(ShapeResolver $shapeResolver, array $options = [], $args = [])
     {
-        $this->basePath = $basePath;
         $this->shapeResolver = $shapeResolver;
         $this->client = new PendingZttpRequest();
-
-        if (array_key_exists('auth', $options)) {
-            $this->auth = $options['auth'];
-        }
-            
+        $this->options = array_merge_recursive($options, $args);
+        $this->params = $this->options['params'] ?? [];
     }
 
     /**
@@ -55,20 +49,22 @@ abstract class Endpoint
      */
     private function buildUri()
     {
-        $uri = "$this->basePath/" . ltrim($this->path, "/");
+        $base_url = rtrim($this->options('url'),'/');
+        $endpoint_uri = ltrim($this->path, '/');
+        $full_rui = "$base_url/$endpoint_uri" ;
 
-        foreach($this->params as $key => $value){
+        foreach ($this->params as $key => $value) {
             if ($key === array_key_first($this->params))
-                $uri .= '?';
+                $full_rui .= '?';
 
-            $uri .= "$key=$value";
+            $full_rui .= "$key=$value";
 
             if ($key !== array_key_first($this->params))
-                $uri .= '&';
+                $full_rui .= '&';
 
         }
 
-        return $uri;
+        return $full_rui;
     }
 
     /**
@@ -125,10 +121,11 @@ abstract class Endpoint
         );
     }
 
-    final public function get($id){
+    final public function get($id)
+    {
 
         return $this->all()->where('transaction_id', $id);
-        
+
     }
 
     final public function post(array $data)
@@ -173,7 +170,7 @@ abstract class Endpoint
     }
 
     /**
-     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     * @return array
      * @throws \Exception
      */
     public function resolveRequest($request)
@@ -185,53 +182,69 @@ abstract class Endpoint
             $collection = $callback->applyTo($collection);
         }
 
-        return $collection;
+        return [
+            'data' => $collection
+        ];
     }
 
-    private function prepareRequest($data = []){
+    private function prepareRequest($data = [])
+    {
 
         $this->options = array_merge_recursive($this->options, $data);
 
         return $this->setHeaders()->setBodyFormat()->buildAuthentication();
-        
+
     }
-    
-    private function buildAuthentication(){
-        if (!empty($this->auth['basic'])) {
-            $auth = $this->auth['basic'];
-            
-            $username = $auth['username'] ?? $auth[0];
-            $password = $auth['password'] ?? $auth[1];
-            
-            $this->client = $this->client->withBasicAuth($username, $password);
-        }else if (isset($this->auth['key'])) {
-            $this->params['key'] = $this->auth['key'];
+
+    private function buildAuthentication()
+    {
+        $auth = $this->options('auth');
+
+        if (!empty($auth['basic']) && count($auth) > 2) {
+            $auth = $auth['basic'];
+
+            $this->client = $this->client->withBasicAuth(
+                $auth['username'] ?? $auth[0],
+                $auth['password'] ?? $auth[1]
+            );
+
+        } else if (isset($auth['key'])) {
+
+            $this->params['key'] = $auth['key'];
         }
     }
-    
-    private function setBodyFormat(){
-        
+
+    private function setBodyFormat()
+    {
+
         $this->client->bodyFormat = $this->body_format;
-        
+
         return $this;
-    }
-    
-    private function setHeaders(){
-        
-        $this->client = $this->client->withHeaders($this->headers);
-        
-        return $this;
-        
     }
 
-    protected function handleResponse($response){
+    private function setHeaders()
+    {
+
+        $this->client = $this->client->withHeaders($this->headers);
+
+        return $this;
+
+    }
+
+    protected function handleResponse($response)
+    {
 
         if ($this->shouldCache) {
-            return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function ()use($response) {
+            return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function () use ($response) {
                 return $response;
             });
         }
 
         return $response;
+    }
+
+    private function options($key)
+    {
+        return $this->options[$key];
     }
 }

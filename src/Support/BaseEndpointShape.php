@@ -4,18 +4,20 @@ namespace BlackBits\ApiConsumer\Support;
 
 use BlackBits\ApiConsumer\Contracts\ShapeContract;
 
-abstract class BaseShape implements ShapeContract
+abstract class BaseEndpointShape implements ShapeContract
 {
     protected $return_shape_data_only = false;
     protected $require_shape_structure = false;
 
     protected $transformations = [];
+    protected $transform_request = [];
+    protected $transform_response = [];
 
     protected $fields = [];
 
     /**
      * @param $data
-     * @return BaseShape
+     * @return BaseEndpointShape
      */
     static function create($data)
     {

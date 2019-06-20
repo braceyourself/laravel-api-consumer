@@ -6,6 +6,9 @@ use BlackBits\ApiConsumer\Contracts\ShapeContract;
 
 class ShapeResolver
 {
+    /**
+     * @var BaseEndpointShape $shape
+     */
     private $shape;
 
     public function __construct(ShapeContract $shape)
@@ -23,16 +26,17 @@ class ShapeResolver
         if (! $this->isJSON($results))
             throw new \Exception("Api result data is not a valid json!");
 
+
         $results = json_decode($results);
 
-        if (! is_array($results))
-            $results = [$results];
 
-        $collection = collect($results)->map(function ($result) {
-            return $this->shape::create($result);
-        });
+        if (!is_array($results)) $results = [$results];
 
-        return $collection;
+        return count($results) > 1 ?
+            collect($results)->map(function ($result) {
+                return $this->shape::create($result);
+            }):
+            $this->shape::create($results);
     }
 
     private function isJSON($json_string)

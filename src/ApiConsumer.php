@@ -2,61 +2,74 @@
 
 namespace BlackBits\ApiConsumer;
 
+use BlackBits\ApiConsumer\Support\Endpoint;
 use BlackBits\ApiConsumer\Support\ShapeResolver;
 use Illuminate\Support\Str;
 
 abstract class ApiConsumer
 {
-    protected $name;
 
-    protected function getEndpoint(){
-        return config("api-consumers.".$this->getName().".apiBasePath");
-    }
-    protected function getOptions(){
-        return config("api-consumers.".$this->getName().".options") ?? [];
-    }
-
-    public function getName(){
-        return isset($this->name)?
-            $this->name :
-            class_basename($this);
-    }
-    
-    public static function __callStatic($name, $arguments)
+    protected function getOptions()
     {
+        return config("api-consumers." . $this->getName()) ?? [];
+    }
 
-        $endpoint = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Endpoints\\" . $name;
+    protected function getName()
+    {
+        return class_basename($this);
+    }
 
-        if (! class_exists($endpoint)) {
-            $endpoint = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Endpoints\\" . $name . "Endpoint";
-        }
+    /**
+     * @param $endpointName
+     * @param $arguments
+     * @return Endpoint
+     * @throws \Exception
+     */
+    public static function __callStatic($endpointName, $arguments)
+    {
+        $endpoint = self::resolveEndpointClass($endpointName);
 
-        if (! class_exists($endpoint)) {
-            $endpoint = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Endpoints\\" . ucfirst($name) . "Endpoint";
-        }
+        $shape = self::resolveEndpointShapeClass($endpointName);
 
-        if (! class_exists($endpoint)) {
+
+        return new $endpoint(
+            new ShapeResolver(new $shape),
+            (new static)->getOptions(),
+            $arguments
+        );
+    }
+
+    private static function resolveEndpointClass($name)
+    {
+        $endpoint = __NAMESPACE__ . "\\Endpoints\\" . $name;
+
+        if (!class_exists($endpoint)) {
             throw new \Exception("Class $endpoint does not exist.");
         }
 
-        $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . $name;
+        return $endpoint;
+    }
 
-        if (! class_exists($shape)) {
-            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . $name . "Shape";
-        }
+    private static function resolveEndpointShapeClass($name)
+    {
+        $shape = __NAMESPACE__ . "\\Shapes\\" . $name;
 
-        if (! class_exists($shape)) {
-            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . ucfirst($name) . "Shape";
-        }
-
-        if (! class_exists($shape)) {
-            $name = Str::singular($name);
-            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . ucfirst($name) . "Shape";
-        }
-        if (! class_exists($shape)) {
+//        if (!class_exists($shape)) {
+//            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . $name . "Shape";
+//        }
+//
+//        if (!class_exists($shape)) {
+//            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . ucfirst($name) . "Shape";
+//        }
+//
+//        if (!class_exists($shape)) {
+//            $name = Str::singular($name);
+//            $shape = (new \ReflectionClass(get_called_class()))->getNamespaceName() . "\\Shapes\\" . ucfirst($name) . "Shape";
+//        }
+        if (!class_exists($shape)) {
             throw new \Exception("Class $shape does not exist.");
         }
 
-        return new $endpoint((new static)->getEndpoint(), new ShapeResolver(new $shape), (new static)->getOptions());
+        return $shape;
     }
 }
