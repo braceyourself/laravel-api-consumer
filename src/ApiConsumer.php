@@ -7,6 +7,8 @@ use Illuminate\Support\Str;
 
 abstract class ApiConsumer
 {
+    protected $name;
+
     protected function getEndpoint(){
         return config("api-consumers.".$this->getName().".apiBasePath");
     }
