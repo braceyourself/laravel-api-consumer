@@ -40,7 +40,7 @@ class ApiConsumerServiceProvider extends ServiceProvider
 //            });
         });
         ApiResponse::macro('validate', function(array $rules, array $messages = []){
-            return Validator::make($this->data(), $rules, $messages)->passes();
+            return Validator::make($this->data(), $rules, $messages)->validate();
         });
     }
 
