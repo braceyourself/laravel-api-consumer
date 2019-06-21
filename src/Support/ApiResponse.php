@@ -37,9 +37,7 @@ class ApiResponse
     }
 
     public function withErrors(){
-        return $this->data()->add([
-            'errors' => $this->errors
-        ]);
+        return $this->data()->merge($this->errors);
     }
 
     public function validate(array $rules, array $messages = [], array $customAttributes = []){
