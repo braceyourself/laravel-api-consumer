@@ -5,6 +5,7 @@ namespace BlackBits\ApiConsumer\Support;
 use BlackBits\ApiConsumer\CollectionCallbacks\_ReflectionCollectionCallback;
 use BlackBits\ApiConsumer\Contracts\ResponseCallbackContract;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Zttp\PendingZttpRequest;
 use Illuminate\Support\Facades\Cache;
 use Zttp\ZttpResponse;
@@ -234,11 +235,15 @@ abstract class BaseEndpoint
 
     private function validate($method, ApiResponse $response)
     {
-        if (isset($this->validation[$method])) {
-            $rules = $this->validation[$method]['rules'] ?? [];
-            $messages = $this->validation[$method]['messages'] ?? [];
+        try {
+            if (isset($this->validation[$method])) {
+                $rules = $this->validation[$method]['rules'] ?? [];
+                $messages = $this->validation[$method]['messages'] ?? [];
 
-            $response->validate($rules, $messages);
+                $response->validate($rules, $messages);
+            }
+        } catch (ValidationException $e) {
+            $response->withErrors($e->errors());
         }
 
 

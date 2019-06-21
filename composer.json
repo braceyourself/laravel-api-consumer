@@ -32,6 +32,7 @@
     "require": {
         "php": "^7.1",
         "illuminate/support": "^5.8",
+        "illuminate/validation": "^5.8",
         "kitetail/zttp": "^0"
     },
     "require-dev": {
