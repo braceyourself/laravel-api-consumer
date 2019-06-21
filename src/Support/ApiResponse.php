@@ -21,13 +21,14 @@ class ApiResponse
     }
 
     /**
+     * @param array $merge
      * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
      */
-    public function data()
+    public function data(array $merge = [])
     {
-        return collect([
+        return collect(array_merge([
             'data' => $this->response->json()
-        ]);
+        ], $merge));
     }
 
     public function addErrors(array $errors)
@@ -36,7 +37,9 @@ class ApiResponse
     }
 
     public function withErrors(){
-        return $this->data()->add('errors', $this->errors);
+        return $this->data()->add([
+            'errors' => $this->errors
+        ]);
     }
 
     public function validate(array $rules, array $messages = [], array $customAttributes = []){
