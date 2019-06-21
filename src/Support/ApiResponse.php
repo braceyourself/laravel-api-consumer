@@ -21,17 +21,31 @@ class ApiResponse
     }
 
     /**
-     * @return array
+     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
      */
     public function data()
     {
-        return $this->response->json();
+        return collect([
+            'data' => $this->response->json()
+        ]);
     }
 
-    public function withErrors(array $errors)
+    public function addErrors(array $errors)
     {
         $this->errors = $errors;
-        return $this;
+    }
+
+    public function withErrors(){
+        return $this->data()->add('errors', $this->errors);
+    }
+
+    public function validate(array $rules, array $messages = [], array $customAttributes = []){
+        Validator::make(
+            $this->data()->toArray(),
+            $rules,
+            $messages,
+            $customAttributes
+        )->validate();
     }
 
 }

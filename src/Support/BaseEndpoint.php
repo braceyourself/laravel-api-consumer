@@ -112,27 +112,26 @@ abstract class BaseEndpoint
 
 
     /**
-     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     * @return ApiResponse
      * @throws \Exception
      */
     final public function get()
     {
         $response = $this->sendRequest('get');
 
-
-        return collect($response->data());
+        return $response->withErrors();
     }
 
     /**
      * @param array $data
-     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     * @return ApiResponse
      * @throws \Exception
      */
     final public function post(array $data)
     {
         $response = $this->sendRequest('POST', $data);
 
-        return collect($response->data());
+        return $response->withErrors();
     }
 
 
@@ -237,13 +236,14 @@ abstract class BaseEndpoint
     {
         try {
             if (isset($this->validation[$method])) {
-                $rules = $this->validation[$method]['rules'] ?? [];
-                $messages = $this->validation[$method]['messages'] ?? [];
-
-                $response->validate($rules, $messages);
+                $response->validate(
+                    $this->validation[$method]['rules'] ?? [],
+                    $this->validation[$method]['messages'] ?? [],
+                    $this->validation[$method]['customAttributes'] ?? []
+                );
             }
         } catch (ValidationException $e) {
-            $response->withErrors($e->errors());
+            $response->addErrors($e->errors());
         }
 
 
