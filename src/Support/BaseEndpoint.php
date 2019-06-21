@@ -90,7 +90,7 @@ abstract class BaseEndpoint
      * @param array $data
      * @return ZttpResponse
      */
-    private function request($method = 'GET', $data = [])
+    public function request($method = 'GET', $data = [])
     {
         $method = strtolower($method);
 
@@ -112,15 +112,14 @@ abstract class BaseEndpoint
 
 
     /**
-     * @param $id
      * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
      * @throws \Exception
      */
-    final public function get($id)
+    final public function get()
     {
         return $this->resolveRequest(
             $this->request('get')
-        )->where('transaction_id', $id);
+        );
     }
 
     /**
