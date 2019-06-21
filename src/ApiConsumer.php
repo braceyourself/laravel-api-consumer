@@ -8,7 +8,6 @@ use Illuminate\Support\Str;
 
 abstract class ApiConsumer
 {
-    protected $shape;
 
     protected function getOptions()
     {
@@ -30,16 +29,17 @@ abstract class ApiConsumer
     {
         $endpoint = self::resolveEndpointClass($endpointName);
 
-        $shape = self::resolveEndpointShapeClass($endpointName);
+        $options = (new static)->getOptions();
 
-
-        return new $endpoint(
-            new ShapeResolver(new $shape),
-            (new static)->getOptions(),
-            $arguments
-        );
+        return new $endpoint($arguments, $options);
     }
 
+
+    /**
+     * @param $name
+     * @return string
+     * @throws \ReflectionException
+     */
     private static function resolveEndpointClass($name)
     {
 
@@ -52,22 +52,6 @@ abstract class ApiConsumer
         return $endpoint;
     }
 
-    /**
-     * @param $endpointName
-     * @return string
-     * @throws \Exception
-     */
-    private static function resolveEndpointShapeClass($endpointName)
-    {
-
-        $shape = self::buildFullyQualifiedName("Shapes", ucfirst($endpointName));
-
-        if (!class_exists($shape)) {
-            throw new \Exception("Endpoint Shape $shape does not exist.");
-        }
-
-        return $shape;
-    }
 
     /**
      * @param mixed ...$append

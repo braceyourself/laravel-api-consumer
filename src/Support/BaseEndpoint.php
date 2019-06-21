@@ -3,7 +3,7 @@
 namespace BlackBits\ApiConsumer\Support;
 
 use BlackBits\ApiConsumer\CollectionCallbacks\_ReflectionCollectionCallback;
-use BlackBits\ApiConsumer\Contracts\CollectionCallbackContract;
+use BlackBits\ApiConsumer\Contracts\ResponseCallbackContract;
 use BlackBits\ApiConsumer\Support\ShapeResolver;
 use Zttp\PendingZttpRequest;
 use Zttp\Zttp;
@@ -13,8 +13,7 @@ use Zttp\ZttpResponse;
 
 abstract class BaseEndpoint
 {
-    private $shapeResolver;
-    private $collectionCallbacks = [];
+    private $responseCallbacks = [];
 
     protected $headers = [];
     protected $options = [];
@@ -33,13 +32,11 @@ abstract class BaseEndpoint
 
     /**
      * Endpoint constructor.
-     * @param ShapeResolver $shapeResolver
      * @param array $options
      * @param array $args
      */
-    public function __construct(ShapeResolver $shapeResolver, array $options = [], $args = [])
+    public function __construct($args = [], array $options = [])
     {
-        $this->shapeResolver = $shapeResolver;
         $this->client = new PendingZttpRequest();
         $this->options = array_merge_recursive($options, $args);
         $this->params = $this->options['params'] ?? [];
@@ -106,31 +103,31 @@ abstract class BaseEndpoint
     }
 
     /**
-     * @param CollectionCallbackContract $collectionCallback
+     * @param ResponseCallbackContract $collectionCallback
      */
-    private function registerCollectionCallback(CollectionCallbackContract $collectionCallback)
+    private function registerCollectionCallback(ResponseCallbackContract $collectionCallback)
     {
-        $this->collectionCallbacks[] = $collectionCallback;
+        $this->responseCallbacks[] = $collectionCallback;
     }
 
+
     /**
-     * @return array
+     * @param $id
+     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
      * @throws \Exception
      */
-    final public function all()
+    final public function get($id)
     {
         return $this->resolveRequest(
             $this->request('get')
-        );
+        )->where('transaction_id', $id);
     }
 
-    final public function get($id)
-    {
-
-        return $this->all()->where('transaction_id', $id);
-
-    }
-
+    /**
+     * @param array $data
+     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     * @throws \Exception
+     */
     final public function post(array $data)
     {
         return $this->resolveRequest(
@@ -138,14 +135,6 @@ abstract class BaseEndpoint
         );
     }
 
-    /**
-     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
-     * @throws \Exception
-     */
-    final public function first()
-    {
-        return $this->all()->first();
-    }
 
     /**
      * @param $name
@@ -174,20 +163,19 @@ abstract class BaseEndpoint
 
     /**
      * @param ZttpResponse $response
-     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     * @return \Illuminate\Support\Collection|ZttpResponse
      * @throws \Exception
      */
     public function resolveRequest(ZttpResponse $response)
     {
-        $collection = $this->shapeResolver->resolve($response);
-
-        /** @var CollectionCallbackContract $callback */
-        foreach ($this->collectionCallbacks as $callback) {
-            $collection = $callback->applyTo($collection);
+        /** @var ResponseCallbackContract $callback */
+        foreach ($this->responseCallbacks as $callback) {
+            $response = $callback->applyTo($response);
         }
 
-        return $collection;
+        return $response;
     }
+
 
     private function prepareRequest($data = [])
     {

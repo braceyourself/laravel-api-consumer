@@ -2,10 +2,10 @@
 
 namespace BlackBits\ApiConsumer\CollectionCallbacks;
 
-use BlackBits\ApiConsumer\Support\BaseCollectionCallback;
+use BlackBits\ApiConsumer\Support\BaseResponseCallback;
 use Illuminate\Support\Collection;
 
-class _ReflectionCollectionCallback extends BaseCollectionCallback
+class _ReflectionCollectionCallback extends BaseResponseCallback
 {
     /**
      * @var array

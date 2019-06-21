@@ -6,11 +6,7 @@ use Zttp\ZttpResponse;
 
 interface ShapeContract
 {
-    static function create($data);
-
     static function createFromResponse(ZttpResponse $response);
-
-
 
     /*
     function isReturnShapeDataOnly(): bool;

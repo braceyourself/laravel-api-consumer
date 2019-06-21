@@ -34,22 +34,6 @@ abstract class BaseResponseShape implements ShapeContract
     }
 
     /**
-     * @param $data
-     * @return BaseResponseShape
-     */
-    static function create($data)
-    {
-        $shape = new static();
-        foreach ($data as $key => $value) {
-            $shape->set($key, $value);
-        }
-
-        $shape->validateStructure();
-        return $shape;
-    }
-
-
-    /**
      * @return bool
      */
     public function requireStructure(): bool
