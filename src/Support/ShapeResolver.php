@@ -19,27 +19,18 @@ class ShapeResolver
 
     /**
      * @param ZttpResponse $response
-     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     * @return BaseEndpointShape
      * @throws \Exception
      */
     public function resolve(ZttpResponse $response)
     {
         $results = $response->json();
 
-        if (! $this->isJSON($results))
-            throw new \Exception("Api result data is not a valid json!");
+        if (!is_array($results))
+            throw new \Exception("Response was not valid. Please contact the vendor.");
 
 
-        $results = json_decode($results);
-
-
-        if (!is_array($results)) $results = [$results];
-
-        return count($results) > 1 ?
-            collect($results)->map(function ($result) {
-                return $this->shape::create($result);
-            }):
-            $this->shape::create($results);
+        return $this->shape::build($results);
     }
 
     private function isJSON($json_string)

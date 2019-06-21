@@ -6,6 +6,8 @@ interface ShapeContract
 {
     static function create($data);
 
+    static function build(array $data);
+
 
     /*
     function isReturnShapeDataOnly(): bool;
