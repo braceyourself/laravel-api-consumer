@@ -4,6 +4,7 @@ namespace BlackBits\ApiConsumer\CollectionCallbacks;
 
 use BlackBits\ApiConsumer\Support\BaseResponseCallback;
 use Illuminate\Support\Collection;
+use Zttp\ZttpResponse;
 
 class _ReflectionCollectionCallback extends BaseResponseCallback
 {
@@ -29,17 +30,12 @@ class _ReflectionCollectionCallback extends BaseResponseCallback
         return $this;
     }
 
-    /**
-     * @param Collection $collection
-     * @return Collection
-     * @throws \Exception
-     */
-    function applyTo(Collection &$collection) : Collection
+    function applyTo(ZttpResponse &$response) : ZttpResponse
     {
         $method = $this->method;
-        if (!method_exists($collection, $method)) {
+        if (!method_exists($response, $method)) {
             throw new \Exception("Method {$method} does not exist.");
         }
-        return $collection->$method(... $this->args);
+        return $response->$method(... $this->args);
     }
 }
