@@ -94,9 +94,10 @@ abstract class BaseEndpoint
      * @param array $data
      * @return ApiResponse
      */
-    public function sendRequest($method = 'GET', $id = null, $data = [])
+    public function sendRequest($method = 'GET', $data = [])
     {
         $method = strtolower($method);
+        $id = $data['id'] ?? null;
 
         $this->prepareRequest($data);
 
@@ -124,7 +125,7 @@ abstract class BaseEndpoint
      */
     final public function find($id)
     {
-        $response = $this->sendRequest('get', $id);
+        $response = $this->sendRequest('get', compact('id'));
 
         return $response->withErrors();
     }
