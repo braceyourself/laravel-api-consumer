@@ -2,7 +2,7 @@
 
 namespace BlackBits\ApiConsumer;
 
-use BlackBits\ApiConsumer\Support\Endpoint;
+use BlackBits\ApiConsumer\Support\BaseEndpoint;
 use BlackBits\ApiConsumer\Support\ShapeResolver;
 use Illuminate\Support\Str;
 
@@ -23,7 +23,7 @@ abstract class ApiConsumer
     /**
      * @param $endpointName
      * @param $arguments
-     * @return Endpoint
+     * @return BaseEndpoint
      * @throws \Exception
      */
     public static function __callStatic($endpointName, $arguments)

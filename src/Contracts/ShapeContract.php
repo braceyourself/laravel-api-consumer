@@ -2,11 +2,14 @@
 
 namespace BlackBits\ApiConsumer\Contracts;
 
+use Zttp\ZttpResponse;
+
 interface ShapeContract
 {
     static function create($data);
 
-    static function build(array $data);
+    static function createFromResponse(ZttpResponse $response);
+
 
 
     /*

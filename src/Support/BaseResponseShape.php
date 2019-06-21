@@ -3,35 +3,39 @@
 namespace BlackBits\ApiConsumer\Support;
 
 use BlackBits\ApiConsumer\Contracts\ShapeContract;
+use Zttp\ZttpResponse;
 
-abstract class BaseEndpointShape implements ShapeContract
+abstract class BaseResponseShape implements ShapeContract
 {
-    protected $return_shape_data_only = false;
     protected $require_shape_structure = false;
 
     protected $transformations = [];
-    protected $transform_request = [];
-    protected $transform_response = [];
 
     protected $fields = [];
+    private $data = [];
 
-    public static function build(array $data)
+    public static function createFromResponse(ZttpResponse $response)
     {
+        $results = $response->json();
         $shape = new static();
 
-        foreach ($data as $key => $value) {
+        if (!is_array($results))
+            throw new \Exception("Response was not valid. Please contact the vendor.");
+
+
+        foreach ($results as $key => $value) {
             $shape->set($key, $value);
         }
 
         $shape->validateStructure();
 
-        return $shape;
+        return $shape->data();
 
     }
 
     /**
      * @param $data
-     * @return BaseEndpointShape
+     * @return BaseResponseShape
      */
     static function create($data)
     {
@@ -44,18 +48,11 @@ abstract class BaseEndpointShape implements ShapeContract
         return $shape;
     }
 
-    /**
-     * @return bool
-     */
-    public function isReturnShapeDataOnly(): bool
-    {
-        return $this->return_shape_data_only;
-    }
 
     /**
      * @return bool
      */
-    public function isRequireShapeStructure(): bool
+    public function requireStructure(): bool
     {
         return $this->require_shape_structure;
     }
@@ -85,11 +82,9 @@ abstract class BaseEndpointShape implements ShapeContract
         if (isset($this->transformations[$key])) {
             $key = $this->transformations[$key];
         }
-        if ($this->return_shape_data_only && !in_array($key, $this->fields)) {
-            return;
-        }
 
-        $this->$key = $value;
+
+        $this->data[$key] = $value;
     }
 
     /**
@@ -100,11 +95,13 @@ abstract class BaseEndpointShape implements ShapeContract
         if (!$this->require_shape_structure) {
             return;
         }
+
         foreach ($this->fields as $field) {
-            if (!isset($this->$field))  {
+            if (!isset($this->data[$field]))  {
                 throw new \Exception("Shape is missing data field: '{$field}'");
             }
         }
+
     }
 
 
@@ -135,5 +132,13 @@ abstract class BaseEndpointShape implements ShapeContract
 
 
         return $consumer_name::$endpoint_name()->findMany($this->$field);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     */
+    private function data()
+    {
+        return collect($this->data);
     }
 }

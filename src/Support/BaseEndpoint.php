@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Zttp\ZttpResponse;
 
 
-abstract class Endpoint
+abstract class BaseEndpoint
 {
     private $shapeResolver;
     private $collectionCallbacks = [];

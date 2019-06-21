@@ -8,7 +8,7 @@ use Zttp\ZttpResponse;
 class ShapeResolver
 {
     /**
-     * @var BaseEndpointShape $shape
+     * @var BaseResponseShape $shape
      */
     private $shape;
 
@@ -19,18 +19,12 @@ class ShapeResolver
 
     /**
      * @param ZttpResponse $response
-     * @return BaseEndpointShape
+     * @return BaseResponseShape
      * @throws \Exception
      */
     public function resolve(ZttpResponse $response)
     {
-        $results = $response->json();
-
-        if (!is_array($results))
-            throw new \Exception("Response was not valid. Please contact the vendor.");
-
-
-        return $this->shape::build($results);
+        return $this->shape::createFromResponse($response);
     }
 
     private function isJSON($json_string)
