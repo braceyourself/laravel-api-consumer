@@ -21,17 +21,8 @@ abstract class BaseEndpoint
     protected $path;
     protected $method;
     protected $responseRules;
-
-    /**
-     * @var PendingZttpRequest
-     */
-    public $client;
-
-    protected $get_rules = [];
-    protected $get_messages = [];
-
-    protected $post_rules = [];
-    protected $post_messages = [];
+    protected $validation = [];
+    protected $client;
 
 
     /**
@@ -128,7 +119,7 @@ abstract class BaseEndpoint
         $response = $this->sendRequest('get');
 
 
-        return collect($response->json());
+        return collect($response->data());
     }
 
     /**
@@ -140,7 +131,7 @@ abstract class BaseEndpoint
     {
         $response = $this->sendRequest('POST', $data);
 
-        return collect($response->json());
+        return collect($response->data());
     }
 
 
@@ -243,10 +234,13 @@ abstract class BaseEndpoint
 
     private function validate($method, ApiResponse $response)
     {
-        $rules = $this->{$method . "_rules"};
-        $messages = $this->{$method . "_messages"};
+        if (isset($this->validation[$method])) {
+            $rules = $this->validation[$method]['rules'] ?? [];
+            $messages = $this->validation[$method]['messages'] ?? [];
 
-        return $response->validate($rules, $messages);
+            $response->validate($rules, $messages);
+        }
+
 
     }
 
