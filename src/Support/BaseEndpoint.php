@@ -27,7 +27,7 @@ abstract class BaseEndpoint
     /**
      * @var PendingZttpRequest
      */
-    private $client;
+    public $client;
 
 
     /**
@@ -47,9 +47,9 @@ abstract class BaseEndpoint
      */
     private function buildUri()
     {
-        $base_url = rtrim($this->getOptions('url'),'/');
+        $base_url = rtrim($this->getOptions('url'), '/');
         $endpoint_uri = ltrim($this->path, '/');
-        $full_rui = "$base_url/$endpoint_uri" ;
+        $full_rui = "$base_url/$endpoint_uri";
 
         foreach ($this->params as $key => $value) {
             if ($key === array_key_first($this->params))
@@ -190,11 +190,9 @@ abstract class BaseEndpoint
         $auth = $this->getOptions('auth');
 
         if (!empty($auth['basic']) && count($auth) > 2) {
-            $auth = $auth['basic'];
 
             $this->client = $this->client->withBasicAuth(
-                $auth['username'] ?? $auth[0],
-                $auth['password'] ?? $auth[1]
+                ...compact('auth')
             );
 
         } else if (isset($auth['key'])) {

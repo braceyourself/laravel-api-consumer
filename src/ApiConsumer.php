@@ -29,9 +29,7 @@ abstract class ApiConsumer
     {
         $endpoint = self::resolveEndpointClass($endpointName);
 
-        $config = (new static)->getConfig();
-
-        return new $endpoint($arguments, $config);
+        return new $endpoint($arguments, (new static)->getConfig());
     }
 
 
