@@ -120,7 +120,7 @@ abstract class BaseEndpoint
     {
         $response = $this->sendRequest('get');
 
-        return collect($response->toJson());
+        return collect($response->json());
     }
 
     /**
