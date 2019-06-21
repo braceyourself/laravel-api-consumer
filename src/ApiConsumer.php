@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 abstract class ApiConsumer
 {
 
-    protected function getOptions()
+    protected function getConfig()
     {
         return config("api-consumers." . $this->getName()) ?? [];
     }
@@ -29,9 +29,9 @@ abstract class ApiConsumer
     {
         $endpoint = self::resolveEndpointClass($endpointName);
 
-        $options = (new static)->getOptions();
+        $config = (new static)->getConfig();
 
-        return new $endpoint($arguments, $options);
+        return new $endpoint($arguments, $config);
     }
 
 

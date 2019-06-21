@@ -32,13 +32,13 @@ abstract class BaseEndpoint
 
     /**
      * Endpoint constructor.
-     * @param array $options
+     * @param array $config
      * @param array $args
      */
-    public function __construct($args = [], array $options = [])
+    public function __construct($args = [], array $config = [])
     {
         $this->client = new PendingZttpRequest();
-        $this->options = array_merge_recursive($options, $args);
+        $this->options = array_merge_recursive($config, $args);
         $this->params = $this->options['params'] ?? [];
     }
 
