@@ -8,6 +8,7 @@ use BlackBits\ApiConsumer\Support\ShapeResolver;
 use Zttp\PendingZttpRequest;
 use Zttp\Zttp;
 use Illuminate\Support\Facades\Cache;
+use Zttp\ZttpResponse;
 
 
 abstract class Endpoint
@@ -68,7 +69,7 @@ abstract class Endpoint
     }
 
     /**
-     * @return string
+     * @return string    private function request($method = 'GET', $data = [])
      */
     private function getCacheKey()
     {
@@ -88,7 +89,9 @@ abstract class Endpoint
     }
 
     /**
-     * @return mixed
+     * @param string $method
+     * @param array $data
+     * @return ZttpResponse
      */
     private function request($method = 'GET', $data = [])
     {
@@ -111,7 +114,7 @@ abstract class Endpoint
     }
 
     /**
-     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
+     * @return array
      * @throws \Exception
      */
     final public function all()
@@ -170,21 +173,20 @@ abstract class Endpoint
     }
 
     /**
-     * @return array
+     * @param ZttpResponse $response
+     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
      * @throws \Exception
      */
-    public function resolveRequest($request)
+    public function resolveRequest(ZttpResponse $response)
     {
-        $collection = $this->shapeResolver->resolve($request);
+        $collection = $this->shapeResolver->resolve($response);
 
         /** @var CollectionCallbackContract $callback */
         foreach ($this->collectionCallbacks as $callback) {
             $collection = $callback->applyTo($collection);
         }
 
-        return [
-            'data' => $collection
-        ];
+        return $collection;
     }
 
     private function prepareRequest($data = [])
@@ -212,6 +214,8 @@ abstract class Endpoint
 
             $this->params['key'] = $auth['key'];
         }
+
+        return $this;
     }
 
     private function setBodyFormat()
@@ -231,9 +235,12 @@ abstract class Endpoint
 
     }
 
-    protected function handleResponse($response)
+    /**
+     * @param ZttpResponse $response
+     * @return ZttpResponse
+     */
+    protected function handleResponse(ZttpResponse $response)
     {
-
         if ($this->shouldCache) {
             return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function () use ($response) {
                 return $response;

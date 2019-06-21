@@ -3,6 +3,7 @@
 namespace BlackBits\ApiConsumer\Support;
 
 use BlackBits\ApiConsumer\Contracts\ShapeContract;
+use Zttp\ZttpResponse;
 
 class ShapeResolver
 {
@@ -17,12 +18,14 @@ class ShapeResolver
     }
 
     /**
-     * @param string $results
+     * @param ZttpResponse $response
      * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
      * @throws \Exception
      */
-    public function resolve(string $results)
+    public function resolve(ZttpResponse $response)
     {
+        $results = $response->json();
+
         if (! $this->isJSON($results))
             throw new \Exception("Api result data is not a valid json!");
 
