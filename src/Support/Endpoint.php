@@ -100,7 +100,7 @@ abstract class Endpoint
         $this->prepareRequest($data);
 
         return $this->handleResponse(
-            $this->client->$method($this->buildUri(), $this->options)->body()
+            $this->client->$method($this->buildUri(), $this->options)
         );
 
     }
