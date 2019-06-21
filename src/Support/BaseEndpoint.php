@@ -34,7 +34,7 @@ abstract class BaseEndpoint
     public function __construct($args = [], array $config = [])
     {
         $this->client = new PendingZttpRequest();
-        $this->options = array_merge_recursive($config['options'], $args);
+        $this->optiogsns = array_merge_recursive($config['options'], $args);
 //        $this->params = $this->options['params'] ?? [];
     }
 
