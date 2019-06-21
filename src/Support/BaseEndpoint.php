@@ -264,6 +264,6 @@ abstract class BaseEndpoint
             $response->json(),
             $this->responseRules
 
-        )->errors()->jsonSerialize();
+        )->validate();
     }
 }
