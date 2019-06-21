@@ -34,7 +34,7 @@ abstract class BaseEndpoint
     public function __construct($args = [], array $config = [])
     {
         $this->client = new PendingZttpRequest();
-        $this->options = array_merge_recursive($config, $args);
+        $this->options = array_merge_recursive($config['options'], $args);
 //        $this->params = $this->options['params'] ?? [];
     }
 
@@ -53,19 +53,20 @@ abstract class BaseEndpoint
         }
 
 
-        $full_rui = "$base_url/$endpoint_uri";
+        $full_uri = trim("$base_url/$endpoint_uri", '/');
         foreach ($this->params as $key => $value) {
             if ($key === array_key_first($this->params))
-                $full_rui .= '?';
+                $full_uri .= '?';
 
-            $full_rui .= "$key=$value";
+            $full_uri .= "$key=$value";
 
             if ($key !== array_key_first($this->params))
-                $full_rui .= '&';
+                $full_uri .= '&';
 
         }
 
-        return $full_rui;
+        dump($full_uri);
+        return $full_uri;
     }
 
     /**
@@ -97,12 +98,12 @@ abstract class BaseEndpoint
     public function sendRequest($method = 'GET', $data = [])
     {
         $method = strtolower($method);
-        $id = $data['id'] ?? null;
 
         $this->prepareRequest($data);
 
+        dump($this->options);
         $response = new ApiResponse(
-            $this->client->$method($this->buildUri($id), $this->options)
+            $this->client->$method($this->buildUri(), $this->options)
         );
 
         $this->validate($method, $response);
@@ -131,12 +132,12 @@ abstract class BaseEndpoint
     }
 
     /**
+     * @param array $data
      * @return ApiResponse
-     * @throws \Exception
      */
-    final public function get()
+    final public function get($data = [])
     {
-        $response = $this->sendRequest('get');
+        $response = $this->sendRequest('get', $data);
 
         return $response->withErrors();
     }
