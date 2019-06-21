@@ -22,12 +22,16 @@ abstract class BaseEndpoint
     protected $method;
     protected $responseRules;
 
-    protected $shouldCache = false;
-    protected $cacheDurationInMinutes = 5;
     /**
      * @var PendingZttpRequest
      */
     public $client;
+
+    protected $get_rules = [];
+    protected $get_messages = [];
+
+    protected $post_rules = [];
+    protected $post_messages = [];
 
 
     /**
@@ -88,7 +92,7 @@ abstract class BaseEndpoint
     /**
      * @param string $method
      * @param array $data
-     * @return ZttpResponse
+     * @return ApiResponse
      * @throws \Exception
      */
     public function sendRequest($method = 'GET', $data = [])
@@ -97,10 +101,13 @@ abstract class BaseEndpoint
 
         $this->prepareRequest($data);
 
-        return $this->handleResponse(
+        $response = new ApiResponse(
             $this->client->$method($this->buildUri(), $this->options)
         );
 
+        $this->validate($method, $response);
+
+        return $response;
     }
 
     /**
@@ -119,6 +126,7 @@ abstract class BaseEndpoint
     final public function get()
     {
         $response = $this->sendRequest('get');
+
 
         return collect($response->json());
     }
@@ -222,26 +230,6 @@ abstract class BaseEndpoint
 
     }
 
-    /**
-     * @param ZttpResponse $response
-     * @return ZttpResponse
-     * @throws \Exception
-     */
-    protected function handleResponse(ZttpResponse $response)
-    {
-        $this->validate($response);
-
-        $response = $this->applyCallbacks($response);
-
-
-        if ($this->shouldCache) {
-            return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function () use ($response) {
-                return $response;
-            });
-        }
-
-        return $response;
-    }
 
     public function config(...$keys)
     {
@@ -253,17 +241,14 @@ abstract class BaseEndpoint
         return config($config_key);
     }
 
-
-    /**
-     * @param ZttpResponse $response
-     * @return array
-     */
-    private function validate(ZttpResponse $response)
+    private function validate($method, ApiResponse $response)
     {
-        return Validator::make(
-            $response->json(),
-            $this->responseRules
+        $rules = $this->{$method . "_rules"};
+        $messages = $this->{$method . "_messages"};
 
-        )->validate();
+        return $response->validate($rules, $messages);
+
     }
+
+
 }
