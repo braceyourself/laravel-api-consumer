@@ -189,10 +189,11 @@ abstract class BaseEndpoint
     {
         $auth = $this->options['auth'];
 
-        if (!empty($auth['basic']) && count($auth) > 2) {
+        if (!empty($authBasic = $auth['basic'])) {
 
             $this->client = $this->client->withBasicAuth(
-                ...compact('auth')
+                $authBasic['username'] ?? $authBasic[0],
+                $authBasic['password'] ?? $authBasic[1]
             );
 
         } else if (isset($auth['key'])) {
