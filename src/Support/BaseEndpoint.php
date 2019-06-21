@@ -4,9 +4,8 @@ namespace BlackBits\ApiConsumer\Support;
 
 use BlackBits\ApiConsumer\CollectionCallbacks\_ReflectionCollectionCallback;
 use BlackBits\ApiConsumer\Contracts\ResponseCallbackContract;
-use BlackBits\ApiConsumer\Support\ShapeResolver;
+use Illuminate\Support\Facades\Validator;
 use Zttp\PendingZttpRequest;
-use Zttp\Zttp;
 use Illuminate\Support\Facades\Cache;
 use Zttp\ZttpResponse;
 
@@ -21,6 +20,7 @@ abstract class BaseEndpoint
     protected $body_format = 'json';
     protected $path;
     protected $method;
+    protected $responseRules;
 
     protected $shouldCache = false;
     protected $cacheDurationInMinutes = 5;
@@ -89,8 +89,9 @@ abstract class BaseEndpoint
      * @param string $method
      * @param array $data
      * @return ZttpResponse
+     * @throws \Exception
      */
-    public function request($method = 'GET', $data = [])
+    public function sendRequest($method = 'GET', $data = [])
     {
         $method = strtolower($method);
 
@@ -117,9 +118,9 @@ abstract class BaseEndpoint
      */
     final public function get()
     {
-        return $this->resolveRequest(
-            $this->request('get')
-        );
+        $response = $this->sendRequest('get');
+
+        return collect($response->toJson());
     }
 
     /**
@@ -129,9 +130,9 @@ abstract class BaseEndpoint
      */
     final public function post(array $data)
     {
-        return $this->resolveRequest(
-            $this->request('POST', $data)
-        );
+        $response = $this->sendRequest('POST', $data);
+
+        return collect($response->json());
     }
 
 
@@ -165,7 +166,7 @@ abstract class BaseEndpoint
      * @return \Illuminate\Support\Collection|ZttpResponse
      * @throws \Exception
      */
-    public function resolveRequest(ZttpResponse $response)
+    public function applyCallbacks(ZttpResponse $response)
     {
         /** @var ResponseCallbackContract $callback */
         foreach ($this->responseCallbacks as $callback) {
@@ -224,9 +225,15 @@ abstract class BaseEndpoint
     /**
      * @param ZttpResponse $response
      * @return ZttpResponse
+     * @throws \Exception
      */
     protected function handleResponse(ZttpResponse $response)
     {
+        $this->validate($response);
+
+        $response = $this->applyCallbacks($response);
+
+
         if ($this->shouldCache) {
             return Cache::remember($this->getCacheKey(), $this->cacheDurationInMinutes, function () use ($response) {
                 return $response;
@@ -244,5 +251,15 @@ abstract class BaseEndpoint
         }
 
         return config($config_key);
+    }
+
+
+    private function validate(ZttpResponse $response)
+    {
+        Validator::make(
+            $response->json(),
+            $this->responseRules
+
+        )->validate();
     }
 }
