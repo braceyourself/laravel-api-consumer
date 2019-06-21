@@ -254,12 +254,16 @@ abstract class BaseEndpoint
     }
 
 
+    /**
+     * @param ZttpResponse $response
+     * @return array
+     */
     private function validate(ZttpResponse $response)
     {
-        Validator::make(
+        return Validator::make(
             $response->json(),
             $this->responseRules
 
-        )->validate();
+        )->errors()->jsonSerialize();
     }
 }
