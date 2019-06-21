@@ -47,7 +47,7 @@ abstract class BaseEndpoint
      */
     private function buildUri()
     {
-        $base_url = rtrim($this->getOptions('url'), '/');
+        $base_url = rtrim($this->options['url'], '/');
         $endpoint_uri = ltrim($this->path, '/');
         $full_rui = "$base_url/$endpoint_uri";
 
@@ -187,7 +187,7 @@ abstract class BaseEndpoint
 
     private function buildAuthentication()
     {
-        $auth = $this->getOptions('auth');
+        $auth = $this->options['auth'];
 
         if (!empty($auth['basic']) && count($auth) > 2) {
 
@@ -235,15 +235,13 @@ abstract class BaseEndpoint
         return $response;
     }
 
-    public function getOptions($key = null)
+    public function config(...$keys)
     {
-
-        try {
-            $val = $this->options[$key];
-        } catch (\ErrorException $e) {
-            $val = null;
+        $config_key = 'api-consumers.' . get_class($this);
+        foreach ($keys as $key) {
+            $config_key .= ".$key";
         }
 
-        return $val ?? $this->options;
+        return config($config_key);
     }
 }
