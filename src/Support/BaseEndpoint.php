@@ -39,7 +39,7 @@ abstract class BaseEndpoint
     {
         $this->client = new PendingZttpRequest();
         $this->options = array_merge_recursive($config, $args);
-        $this->params = $this->options['params'] ?? [];
+//        $this->params = $this->options['params'] ?? [];
     }
 
     /**
