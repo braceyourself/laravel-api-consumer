@@ -15,6 +15,20 @@ abstract class BaseEndpointShape implements ShapeContract
 
     protected $fields = [];
 
+    public static function build(array $data)
+    {
+        $shape = new static();
+
+        foreach ($data as $key => $value) {
+            $shape->set($key, $value);
+        }
+
+        $shape->validateStructure();
+
+        return $shape;
+
+    }
+
     /**
      * @param $data
      * @return BaseEndpointShape

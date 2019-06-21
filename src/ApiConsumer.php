@@ -43,7 +43,7 @@ abstract class ApiConsumer
     private static function resolveEndpointClass($name)
     {
 
-        $endpoint = self::getApiConsumerNamespace("Endpoints", ucfirst($name));
+        $endpoint = self::buildFullyQualifiedName("Endpoints", ucfirst($name));
 
         if (!class_exists($endpoint)) {
             throw new \Exception("Class $endpoint does not exist.");
@@ -60,7 +60,7 @@ abstract class ApiConsumer
     private static function resolveEndpointShapeClass($endpointName)
     {
 
-        $shape = self::getApiConsumerNamespace("Shapes", ucfirst($endpointName));
+        $shape = self::buildFullyQualifiedName("Shapes", ucfirst($endpointName));
 
         if (!class_exists($shape)) {
             throw new \Exception("Endpoint Shape $shape does not exist.");
@@ -74,7 +74,7 @@ abstract class ApiConsumer
      * @return string
      * @throws \ReflectionException
      */
-    private static function getApiConsumerNamespace(...$append)
+    private static function buildFullyQualifiedName(...$append)
     {
         $namespaceName = (new \ReflectionClass(get_called_class()))->getNamespaceName();
 
