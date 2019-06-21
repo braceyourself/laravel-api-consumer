@@ -39,14 +39,21 @@ abstract class BaseEndpoint
     }
 
     /**
+     * @param array $appendPath
      * @return string
      */
-    private function buildUri()
+    private function buildUri(...$appendPath)
     {
         $base_url = rtrim($this->options['url'], '/');
-        $endpoint_uri = ltrim($this->path, '/');
-        $full_rui = "$base_url/$endpoint_uri";
+        $endpoint_uri = trim($this->path, '/');
 
+        foreach($appendPath as $path){
+            $path = trim($path, '/');
+            $endpoint_uri .= "/$path";
+        }
+
+
+        $full_rui = "$base_url/$endpoint_uri";
         foreach ($this->params as $key => $value) {
             if ($key === array_key_first($this->params))
                 $full_rui .= '?';
@@ -83,18 +90,18 @@ abstract class BaseEndpoint
 
     /**
      * @param string $method
+     * @param null $id
      * @param array $data
      * @return ApiResponse
-     * @throws \Exception
      */
-    public function sendRequest($method = 'GET', $data = [])
+    public function sendRequest($method = 'GET', $id = null, $data = [])
     {
         $method = strtolower($method);
 
         $this->prepareRequest($data);
 
         $response = new ApiResponse(
-            $this->client->$method($this->buildUri(), $this->options)
+            $this->client->$method($this->buildUri($id), $this->options)
         );
 
         $this->validate($method, $response);
@@ -110,6 +117,17 @@ abstract class BaseEndpoint
         $this->responseCallbacks[] = $collectionCallback;
     }
 
+
+    /**
+     * @param $id
+     * @return ApiResponse
+     */
+    final public function find($id)
+    {
+        $response = $this->sendRequest('get', $id);
+
+        return $response->withErrors();
+    }
 
     /**
      * @return ApiResponse
