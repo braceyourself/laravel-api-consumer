@@ -30,7 +30,7 @@ class ShapeResolver
             throw new \Exception("Response was not valid. Please contact the vendor.");
 
 
-        return $this->shape::build($results);
+        return $this->shape::create($results);
     }
 
     private function isJSON($json_string)
